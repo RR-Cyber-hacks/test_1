@@ -3,7 +3,7 @@ const express = require('express');
 const app = express();
 const path = require('path');
 const hbs = require('hbs');
-const Register = require('./models/registerUser');
+// const Register = require('./models/registerUser');
 const port = process.env.PORT || 4000;
 
 app.use(express.json());
@@ -24,7 +24,7 @@ hbs.registerPartials(partialPath);
 console.log(staticPath);
 
 app.get('/', (req, res) => {
-    res.render('index');
+    res.render('login');
     // res.send('Bis');
 });
 
