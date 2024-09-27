@@ -2,7 +2,7 @@ const exress = require('express');
 const rout = exress.Router();
 const Register = require('../models/registerUser');
 const auth = require('../middleware/auth');
-
+const bcrypt = require('bcrypt');
 
 rout.get('/', async (req, res) => {
     try {
@@ -33,6 +33,28 @@ rout.post('/register', async (req, res) => {
     }
 });
 
+rout.post('/login', async (req, res) => {
+    try {
+        const email  = req.body.email;
+        const password = req.body.pswd;
+
+        const user = await Register.findOne({ email: email });
+        const pas = await bcrypt.compare(password, user.password);
+
+        const token = await user.generateAuthToken();
+
+        res.cookie('login_cookie', token);
+
+        if(pas){
+            res.status(201).render('home');
+        }
+        else{
+            res.status(401).json({ message: 'Invalid Password!' });
+        }
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
 
 rout.get('/logout', auth, async (req, res) => {
     try {
