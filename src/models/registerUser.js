@@ -1,45 +1,51 @@
 const mongoose = require('mongoose');
-const validator = require('validator');
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
 
-const employeeSchemata = new mongoose.Schema({
-    name: {
+const employeeSchema = new mongoose.Schema({
+    email: {
         type: String,
-        required: true,
-        minlength: 1,
-        maxlength: 50
-    },
-    department: {
-        type: String,
-        required: true,
-        minlength: 3,
-        maxlength: 50
-    },
-    salary: {
-        type: Number,
-        required: true,
-        min: 1000,
-        max: 100000
-    },
-    startDate: {
-        type: Date,
         required: true
     },
-    email : {
+
+    password: {
         type: String,
-        required: true,
-        unique: true, 
-        validators: [
-            validator.isEmail(), 
-            { message: 'Please enter a valid email address.' }
-        ],
-        // match: /^\w+([\.-]?\w+)*@ \w+([\.-]?\w+)*(\.\w{2,3})+$/
+        required: true
+    },
+
+    tokens: [{
+        token: {
+            type: String,
+            required: true
+        }
+    }]
+});
+
+
+employeeSchema.methods.generateAuthToken = async function () {
+    try {
+        const employee = this;
+        const token = jwt.sign({ _id: employee._id.toString()}, process.env.SECRET_KEY, { expiresIn: '7d' });
+        employee.tokens = employee.tokens.concat({token: token});
+        await employee.save();
+        return token;
+
+    } catch (error) {
+        console.error(error);
     }
+}
+
+
+employeeSchema.pre('save', async function (next) {
+    const employee = this;
+    if (employee.isModified('password')) {
+        employee.password = await bcrypt.hash(employee.password, 10);
+    }
+    next();
 });
 
 
 // Create Collections
-
-
-const Register = new mongoose.model('Register', employeeSchemata);
+const Register = mongoose.model('Register', employeeSchema);
 
 module.exports = Register; 
